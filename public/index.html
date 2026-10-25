@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple Notes</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">A SMALL FULL-STACK PROJECT</p>
+    <h1>Simple Notes</h1>
+    <p>Write a thought. Save it to PostgreSQL.</p>
+    <form id="note-form">
+      <label for="body">Your note</label>
+      <textarea id="body" name="body" required maxlength="500" rows="4" placeholder="What are you working on?"></textarea>
+      <button type="submit">Save note</button>
+    </form>
+    <p id="status" role="status" aria-live="polite">Connecting…</p>
+    <h2>Recent notes</h2>
+    <ul id="notes"></ul>
+    <button id="refresh" type="button">Refresh notes</button>
+    <footer>Vanilla JavaScript · Node.js · PostgreSQL<br>Database credentials loaded by the backend from AWS Secrets Manager.</footer>
+  </main>
+</body>
+</html>
