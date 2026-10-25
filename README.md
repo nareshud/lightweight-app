@@ -140,4 +140,16 @@ Queries use SQL parameters, notes render as text, and credentials stay in backen
 - Port in use: change `PORT` in `.env`.
 - Stop the app with Ctrl+C. Stop the local database with `docker compose stop db`.
 
+## Jenkins CI/CD
+
+The root `Jenkinsfile` runs filesystem Trivy checks, JavaScript checks and tests, SonarQube analysis and quality gate, builds a Docker image, and scans the image. High and critical Trivy findings fail the pipeline. Trivy JSON reports are archived as Jenkins build artifacts. Configure the Jenkins SonarQube Scanner plugin and server installation named `SonarQube`, define a quality gate in SonarQube, and configure the SonarQube webhook to `https://<jenkins-url>/sonarqube-webhook/`. Install/register the scanner tool as `sonar-scanner`. Configure Jenkins with NodeJS 22, Docker, Trivy, kubectl (for EKS), and the Workspace Cleanup plugin; the Jenkins agent must be able to run Docker commands.
+
+Set the Jenkins NodeJS tool name to `NodeJS 22`. Set the job environment variable `REGISTRY_URL` to your registry host (for example, `123456789012.dkr.ecr.ap-south-1.amazonaws.com`) and create Jenkins username/password credential `container-registry` with push access. The image repository is selected by `IMAGE_NAME`; its tag defaults to the Git commit. Set `DEPLOY_TARGET` to `none` for CI only, `docker` for deployment on the Jenkins Docker host, or `eks` for Kubernetes deployment. Publishing occurs only when a deployment target is selected.
+
+For Docker deployment, provide an `.env` file in the Jenkins workspace with the runtime configuration and database credentials. The deploy stage starts or replaces a container on the Jenkins agent and publishes port `DOCKER_HOST_PORT` (default 3000). Set `DOCKER_DB_HOST` to the database hostname reachable inside the app container; it defaults to `host.docker.internal`. The app listens on all container interfaces, so ensure the agent can reach the database and limit access to the published port appropriately.
+
+For EKS deployment, create Jenkins Secret File credential `eks-kubeconfig`; set `EKS_NAMESPACE`, `EKS_DEPLOYMENT`, and `EKS_CONTAINER` in the job environment. The cluster must already contain the deployment and the `simple-notes-runtime` Kubernetes Secret with the app settings and database connection configuration. The pipeline updates the selected container image and waits for the rollout. The sample `k8s/deployment.yaml` provides a starting Deployment and ClusterIP Service; replace its image placeholder and provision the runtime Secret separately.
+
+This pipeline stores scan reports in Jenkins' archived build artifacts. For durable image storage, it pushes to the configured container registry before either deployment. Protect Jenkins credentials and restrict deployment jobs to trusted branches.
+
 AWS reference: [GetSecretValue with JavaScript SDK v3](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/javascript_secrets-manager_code_examples.html) and [default credential chain](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html).

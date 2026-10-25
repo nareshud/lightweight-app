@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-notes
+  labels:
+    app: simple-notes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simple-notes
+  template:
+    metadata:
+      labels:
+        app: simple-notes
+    spec:
+      containers:
+        - name: simple-notes
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: simple-notes-runtime
+          env:
+            - name: HOST
+              value: 0.0.0.0
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-notes
+spec:
+  selector:
+    app: simple-notes
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP
